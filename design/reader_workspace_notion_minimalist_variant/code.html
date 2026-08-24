@@ -1,0 +1,329 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AI Novel Translator - Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Merriweather:wght@400;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#d8d9e3",
+                        "background": "#ffffff",
+                        "on-primary-fixed": "#001a42",
+                        "surface-container-low": "#f7f7f7",
+                        "on-surface-variant": "#424754",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006c49",
+                        "on-primary-container": "#fefcff",
+                        "surface-container-high": "#e6e7f2",
+                        "secondary-fixed-dim": "#4edea3",
+                        "inverse-on-surface": "#eff0fa",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-secondary-fixed": "#002113",
+                        "primary": "#0f172a", /* Changed to slate-900 for monochrome */
+                        "on-tertiary-fixed-variant": "#723600",
+                        "primary-fixed": "#d8e2ff",
+                        "outline": "#727785",
+                        "secondary-fixed": "#6ffbbe",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2e3038",
+                        "on-secondary-container": "#00714d",
+                        "error": "#ba1a1a",
+                        "on-background": "#0f172a",
+                        "tertiary-fixed": "#ffdcc6",
+                        "surface": "#ffffff",
+                        "secondary-container": "#6cf8bb",
+                        "on-tertiary-fixed": "#311400",
+                        "surface-variant": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#005ac2",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#e2e8f0",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#f8fafc",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-container": "#f8fafc",
+                        "on-surface": "#0f172a",
+                        "surface-bright": "#ffffff",
+                        "surface-container-highest": "#e2e8f0",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary": "#924700",
+                        "tertiary-container": "#b75b00",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#adc6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "panel-padding": "32px",
+                        "sidebar-width": "240px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "body-reading": ["Merriweather", "serif"],
+                        "ui-medium": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "body-reading-mobile": ["Merriweather", "serif"],
+                        "label-caps": ["Inter", "sans-serif"],
+                        "ui-small": ["Inter", "sans-serif"],
+                        "display-lg": ["Inter", "sans-serif"],
+                        "headline-sm": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-reading": ["16px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "ui-medium": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-reading-mobile": ["16px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "ui-small": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for minimalist look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .content-editable-block:focus {
+            outline: none;
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-ui-medium h-screen flex overflow-hidden selection:bg-slate-200">
+<!-- SideNavBar (Notion Style) -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-low border-r border-outline-variant flex flex-col p-3 gap-1 z-20 transition-all duration-300 group hover:w-sidebar-width">
+<!-- Workspace Header -->
+<div class="flex items-center gap-2 mb-4 px-2 py-2 mt-1 hover:bg-black/5 rounded-md cursor-pointer transition-colors">
+<img alt="AI Translator Logo" class="w-6 h-6 rounded" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwoomIEp0huM16eva_-P0CNAjyRrF7kaAkKfY3SfQ-0QlySvjrPl0foAFoVt-EH4blcSJNt9jLOLPkhG5_zDaTA7C5DYDetzCTpU1UU3VDOnolMVc9RQauF-ZQUarazMtQmNd1VHf9KR5AA9fJkmhKTSU95cDaGEHdv7dCfzFILXFJP24T4CdpAKQLB73lmXsCoOpWSyo_OOWAUyhhjBCNUMeO14xZvgVCkfCcjqxxJXeKR7yNV35IaxpSR_O0rtfbI-E">
+<span class="font-ui-medium text-ui-small font-semibold truncate">WNovel</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">unfold_more</span>
+</div>
+<!-- Main Navigation -->
+<nav class="flex-1 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
+<a class="flex items-center gap-2 px-2 py-1.5 text-on-surface hover:bg-black/5 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px] text-slate-500">search</span>
+<span class="text-ui-small">Search</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1.5 text-on-surface hover:bg-black/5 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px] text-slate-500">schedule</span>
+<span class="text-ui-small">Updates</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1.5 text-on-surface hover:bg-black/5 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px] text-slate-500">settings</span>
+<span class="text-ui-small">Settings</span>
+</a>
+<!-- Content Tree -->
+<div class="mt-4">
+<div class="flex items-center gap-1 px-2 py-1 text-slate-500 hover:bg-black/5 rounded-md cursor-pointer group/tree">
+<span class="material-symbols-outlined text-[16px] opacity-50 group-hover/tree:opacity-100 transition-opacity">arrow_drop_down</span>
+<span class="font-ui-medium text-xs font-semibold uppercase tracking-wider">Library</span>
+</div>
+<div class="flex flex-col gap-0.5 pl-6 mt-1">
+<a class="flex items-center gap-2 px-2 py-1 text-slate-600 hover:bg-black/5 rounded-md transition-colors truncate" href="#">
+<span class="material-symbols-outlined text-[16px] text-slate-400">description</span>
+<span class="text-ui-small truncate">Chapter 14</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1 bg-black/5 text-slate-900 font-medium rounded-md transition-colors truncate" href="#">
+<span class="material-symbols-outlined text-[16px] text-slate-700">description</span>
+<span class="text-ui-small truncate">Chapter 15</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1 text-slate-600 hover:bg-black/5 rounded-md transition-colors truncate" href="#">
+<span class="material-symbols-outlined text-[16px] text-slate-400">description</span>
+<span class="text-ui-small truncate">Chapter 16</span>
+</a>
+</div>
+</div>
+<div class="mt-4">
+<div class="flex items-center gap-1 px-2 py-1 text-slate-500 hover:bg-black/5 rounded-md cursor-pointer group/tree">
+<span class="material-symbols-outlined text-[16px] opacity-50 group-hover/tree:opacity-100 transition-opacity">arrow_right</span>
+<span class="font-ui-medium text-xs font-semibold uppercase tracking-wider">Glossary</span>
+</div>
+</div>
+<!-- Stats Widget -->
+<div class="mt-8 px-3 py-3 mx-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+<p class="font-ui-medium text-xs font-semibold uppercase text-slate-500 tracking-wider mb-3">Project Stats</p>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-xs text-slate-500">Progress</span>
+<span class="text-xs font-medium text-slate-700">35/150</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-1.5">
+<div class="bg-slate-400 h-1.5 rounded-full" style="width: 23%"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-xs text-slate-500">Tokens</span>
+<span class="text-xs font-medium text-slate-700">1.2M</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-slate-500">Cost</span>
+<span class="text-xs font-medium text-slate-700">9,500 VNĐ</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Bottom Actions -->
+<div class="mt-auto pt-2 flex flex-col gap-0.5">
+<a class="flex items-center gap-2 px-2 py-1.5 text-slate-600 hover:bg-black/5 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="text-ui-small">Import File</span>
+</a>
+<a class="flex items-center gap-2 px-2 py-1.5 text-slate-600 hover:bg-black/5 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+<span class="text-ui-small">Trash</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width flex-1 flex flex-col h-full bg-background relative">
+<!-- Editor Content (Single Vertical Document) -->
+<div class="flex-1 overflow-y-auto">
+<div class="max-w-[1100px] mx-auto px-12 py-12 pb-32">
+<!-- Minimalist Header / Breadcrumbs -->
+<header class="flex justify-between items-center mb-10 w-full group/header">
+<div class="flex items-center text-sm text-slate-500 font-ui-medium gap-1">
+<span class="hover:text-slate-900 cursor-pointer transition-colors">WNovel</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="hover:text-slate-900 cursor-pointer transition-colors">Library</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-slate-900 font-medium">Chapter 15</span>
+</div>
+<!-- Subtle Floating Actions -->
+<div class="flex items-center gap-2 opacity-0 group-hover/header:opacity-100 transition-opacity duration-300">
+<button class="px-3 py-1 text-xs font-ui-medium text-slate-600 hover:bg-slate-100 rounded transition-colors">History</button>
+<button class="px-3 py-1 text-xs font-ui-medium text-slate-600 hover:bg-slate-100 rounded transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">translate</span>
+                            Translate
+                        </button>
+<button class="px-3 py-1 text-xs font-ui-medium bg-slate-900 text-white hover:bg-slate-800 rounded transition-colors">Export</button>
+</div>
+</header>
+<!-- Document Title -->
+<h1 class="text-4xl font-bold text-slate-900 mb-12 font-headline-md tracking-tight outline-none">
+                    Chapter 15: The Awakening
+                </h1>
+<!-- Column Headers (Optional, for clarity) -->
+<div class="grid grid-cols-2 gap-12 mb-6 border-b border-slate-100 pb-2">
+<div class="text-xs font-ui-medium text-slate-400 uppercase tracking-widest">Source Text (ZH)</div>
+<div class="text-xs font-ui-medium text-slate-400 uppercase tracking-widest flex justify-between items-center">
+                        Target Text (VI) - Draft
+                        <div class="flex gap-1">
+<button class="text-slate-400 hover:text-slate-900 transition-colors"><span class="material-symbols-outlined text-[16px]">undo</span></button>
+<button class="text-slate-400 hover:text-slate-900 transition-colors"><span class="material-symbols-outlined text-[16px]">redo</span></button>
+</div>
+</div>
+</div>
+<!-- Side-by-Side Blocks -->
+<div class="flex flex-col gap-6 font-body-reading text-[17px] leading-relaxed">
+<!-- Block 1 -->
+<div class="grid grid-cols-2 gap-12 group/block items-start">
+<div class="text-slate-600 pr-4">
+<p class="">天道苍茫，万物皆有定数。林渊立于孤峰之巅，俯瞰着脚下翻滚的云海，心中却是波澜不起。他在此闭关已逾百年，世间繁华于他不过是过眼云烟。</p>
+</div>
+<div class="text-slate-900 outline-none content-editable-block pl-4 border-l border-transparent hover:border-slate-200 transition-colors p-1 -ml-1 -mt-1">
+<p class="">Thiên đạo mờ mịt, vạn vật đều có định số. Lâm Uyên đứng trên đỉnh ngọn cô phong, cúi nhìn biển mây cuồn cuộn dưới chân, trong lòng lại chẳng chút gợn sóng. Hắn bế quan nơi đây đã hơn trăm năm, phồn hoa thế gian đối với hắn chẳng qua chỉ là mây khói thoảng qua.</p>
+</div>
+</div>
+<!-- Block 2 -->
+<div class="grid grid-cols-2 gap-12 group/block items-start">
+<div class="text-slate-600 pr-4">
+<p class="">“师尊，”清脆的声音自背后传来，打破了长久的宁静。一名青衣少女轻盈走来，眉眼间带着几分焦急，“魔宗异动，似乎在图谋破开封印。”</p>
+</div>
+<div class="text-slate-900 outline-none content-editable-block pl-4 border-l border-transparent hover:border-slate-200 transition-colors p-1 -ml-1 -mt-1">
+<p class="">"Sư tôn," âm thanh trong trẻo từ phía sau truyền đến, phá vỡ sự tĩnh lặng bao lâu nay. Một thiếu nữ áo xanh nhẹ nhàng bước tới, giữa hàng mày lộ vẻ lo lắng, "Ma Tông có dị động, dường như đang mưu đồ phá vỡ phong ấn."</p>
+</div>
+</div>
+<!-- Block 3 (Active/Highlight) -->
+<div class="grid grid-cols-2 gap-12 group/block items-start relative bg-slate-50/50 -mx-4 px-4 py-2 rounded-lg border border-slate-100">
+<div class="text-slate-800 pr-4 font-medium">
+<p class="">林渊微微侧目，眼神依旧淡漠：“劫数将至，非人力可阻。你去通知各峰长老，开启护山大阵。”</p>
+</div>
+<div class="text-slate-900 outline-none content-editable-block pl-4 border-l-2 border-slate-400 p-1 -ml-1 -mt-1 relative">
+<p class="">Lâm Uyên khẽ liếc mắt, ánh mắt vẫn đạm mạc như cũ: "Kiếp số sắp đến, sức người khó bề ngăn cản. Con đi thông báo cho trưởng lão các phong, mở ra Hộ Sơn Đại Trận."</p>
+<span class="absolute -right-2 top-0 text-[10px] text-slate-500 font-ui-small bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">Translating...</span>
+</div>
+</div>
+<!-- Block 4 -->
+<div class="grid grid-cols-2 gap-12 group/block items-start">
+<div class="text-slate-600 pr-4">
+<p class="">风乍起，吹动他素白的衣摆，宛如谪仙降世。然而，只有他自己知道，那坚不可摧的道心，在听到“魔宗”二字时，竟生出了一丝微不可察的裂痕。</p>
+</div>
+<div class="text-slate-400 italic outline-none content-editable-block pl-4 border-l border-transparent hover:border-slate-200 transition-colors p-1 -ml-1 -mt-1">
+<p class="">Gió chợt nổi lên, thổi tung vạt áo trắng tinh của hắn, tựa như trích tiên giáng thế. Thế nhưng, chỉ có chính hắn mới biết, đạo tâm vững chãi không thể phá vỡ kia, khi nghe thấy hai chữ "Ma Tông", lại sinh ra một vết nứt nhỏ đến mức không thể nhận ra.</p>
+</div>
+</div>
+</div>
+<!-- Add Block Button -->
+<div class="mt-8 flex justify-center opacity-0 hover:opacity-100 transition-opacity">
+<button class="flex items-center gap-1 text-slate-400 hover:text-slate-900 font-ui-medium text-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Add Block
+                    </button>
+</div>
+</div>
+</div>
+<!-- Translation Log Console (Integrated smoothly at the bottom) -->
+<div class="h-32 bg-white border-t border-slate-200 shrink-0 font-ui-small text-[12px] p-4 overflow-y-auto flex flex-col gap-1.5 font-mono shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] z-10">
+<div class="flex items-center gap-2 justify-between mb-2 pb-2 border-b border-slate-100">
+<span class="font-ui-medium text-xs font-semibold text-slate-500 uppercase tracking-wider">System Log</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-[16px] text-slate-400 cursor-pointer hover:text-slate-800 transition-colors">delete_outline</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400 cursor-pointer hover:text-slate-800 transition-colors">keyboard_arrow_down</span>
+</div>
+</div>
+<div class="text-slate-600 flex gap-3">
+<span class="text-slate-400 shrink-0">[10:42:05]</span>
+<span class="">Model initialized: GPT-4-Turbo-Lit-v2. Context window: 128k.</span>
+</div>
+<div class="text-slate-600 flex gap-3">
+<span class="text-slate-400 shrink-0">[10:42:12]</span>
+<span class="">Analyzing glossary terms for Chapter 15... Found 14 matched entities.</span>
+</div>
+<div class="text-slate-900 font-medium flex gap-3">
+<span class="text-slate-400 shrink-0 font-normal">[10:42:15]</span>
+<span class="">Processing Segment #4 (Char count: 125). Applying stylistic template 'Xianxia_Formal'.</span>
+</div>
+<div class="text-slate-500 flex gap-3 animate-pulse">
+<span class="text-slate-400 shrink-0">[10:42:18]</span>
+<span class="">Generating output... ~45 tokens/sec.</span>
+</div>
+</div>
+</main>
+
+
+</body></html>
