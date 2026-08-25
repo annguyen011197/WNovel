@@ -581,7 +581,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${project.chapters.where((c) => c.status == 'done').length} / ${project.chapters.length}',
+                    '${project.chapters.where((c) => c.status == ChapterStatus.done).length} / ${project.chapters.length}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 13,

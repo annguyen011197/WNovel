@@ -1,10 +1,29 @@
+enum ChapterStatus {
+  pending,
+  translating,
+  done;
+
+  String toJson() => name;
+
+  static ChapterStatus fromJson(String? value) {
+    switch (value) {
+      case 'translating':
+        return ChapterStatus.translating;
+      case 'done':
+        return ChapterStatus.done;
+      default:
+        return ChapterStatus.pending;
+    }
+  }
+}
+
 class Chapter {
   final String id;
   final String title;
   final String originalText;
   String translatedText;
   String summary;
-  String status; // 'pending', 'translating', 'done'
+  ChapterStatus status;
 
   Chapter({
     required this.id,
@@ -12,8 +31,26 @@ class Chapter {
     required this.originalText,
     this.translatedText = '',
     this.summary = '',
-    this.status = 'pending',
+    this.status = ChapterStatus.pending,
   });
+
+  Chapter copyWith({
+    String? id,
+    String? title,
+    String? originalText,
+    String? translatedText,
+    String? summary,
+    ChapterStatus? status,
+  }) {
+    return Chapter(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      originalText: originalText ?? this.originalText,
+      translatedText: translatedText ?? this.translatedText,
+      summary: summary ?? this.summary,
+      status: status ?? this.status,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -21,7 +58,7 @@ class Chapter {
         'originalText': originalText,
         'translatedText': translatedText,
         'summary': summary,
-        'status': status,
+        'status': status.toJson(),
       };
 
   factory Chapter.fromJson(Map<dynamic, dynamic> json) => Chapter(
@@ -30,7 +67,7 @@ class Chapter {
         originalText: json['originalText'],
         translatedText: json['translatedText'] ?? '',
         summary: json['summary'] ?? '',
-        status: json['status'] ?? 'pending',
+        status: ChapterStatus.fromJson(json['status']),
       );
 }
 
@@ -111,7 +148,7 @@ class Project {
 
   double get progress {
     if (chapters.isEmpty) return 0.0;
-    int completed = chapters.where((c) => c.status == 'done').length;
+    int completed = chapters.where((c) => c.status == ChapterStatus.done).length;
     return completed / chapters.length;
   }
 

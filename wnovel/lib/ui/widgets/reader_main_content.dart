@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/project.dart';
 import '../../providers/project_provider.dart';
 import '../../providers/translation_provider.dart';
-import '../../services/api_service.dart';
 
 class ReaderMainContent extends ConsumerStatefulWidget {
   final Chapter chapter;
@@ -16,13 +15,58 @@ class ReaderMainContent extends ConsumerStatefulWidget {
 }
 
 class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
+  // Layout constants
+  static const double _horizontalPadding = 32.0;
+  static const double _dividerGapWidth = 24.0;
+  static const double _totalHorizontalInset =
+      _horizontalPadding * 2 + _dividerGapWidth; // 88
+
   double _splitRatio = 0.5;
+
+  // Cached paragraph lists — recomputed only when chapter content changes
+  List<String> _sourceParagraphs = const [];
+  List<String> _targetParagraphs = const [];
+  String _lastOriginalText = '';
+  String _lastTranslatedText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateParagraphs(widget.chapter);
+  }
+
+  @override
+  void didUpdateWidget(covariant ReaderMainContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.chapter.originalText != widget.chapter.originalText ||
+        oldWidget.chapter.translatedText != widget.chapter.translatedText) {
+      _updateParagraphs(widget.chapter);
+    }
+  }
+
+  void _updateParagraphs(Chapter chapter) {
+    if (chapter.originalText != _lastOriginalText) {
+      _lastOriginalText = chapter.originalText;
+      _sourceParagraphs = chapter.originalText
+          .split('\n')
+          .where((p) => p.trim().isNotEmpty)
+          .toList();
+    }
+    if (chapter.translatedText != _lastTranslatedText) {
+      _lastTranslatedText = chapter.translatedText;
+      _targetParagraphs = chapter.translatedText
+          .split('\n')
+          .where((p) => p.trim().isNotEmpty)
+          .toList();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<TranslationState>(translationProvider, (previous, next) {
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),
@@ -33,14 +77,6 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
     });
 
     final chapter = widget.chapter;
-    final sourceParagraphs = chapter.originalText
-        .split('\n')
-        .where((p) => p.trim().isNotEmpty)
-        .toList();
-    final targetParagraphs = chapter.translatedText
-        .split('\n')
-        .where((p) => p.trim().isNotEmpty)
-        .toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -52,7 +88,7 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
           children: [
             // Title
             Padding(
-              padding: const EdgeInsets.all(32.0),
+              padding: const EdgeInsets.all(_horizontalPadding),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -88,12 +124,12 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                         ],
                       ),
                     ),
-                    onSelected: (value) async {
+                    onSelected: (value) {
                       final project = ref.read(activeProjectProvider);
                       if (project == null) return;
 
                       if (value == 'following') {
-                        if (chapter.status == 'translating') {
+                        if (chapter.status == ChapterStatus.translating) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Chapter is already translating.'),
@@ -105,48 +141,14 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                           (c) => c.id == chapter.id,
                         );
                         if (index != -1) {
-                          if (chapter.status == 'done') {
-                            // Reset status to allow re-translation
-                            chapter.status = 'pending';
-                            ref
-                                .read(libraryProvider.notifier)
-                                .updateProject(project);
-                          }
                           ref
                               .read(translationProvider.notifier)
                               .startBatchTranslation(project, index, 1);
                         }
                       } else if (value == 'only') {
-                        // Implement translate only
-                        setState(() {
-                          chapter.status = 'translating';
-                          ref
-                              .read(libraryProvider.notifier)
-                              .updateProject(project);
-                        });
-                        try {
-                          final result = await ApiService().translateOnly(
-                            chapter.originalText,
-                          );
-                          setState(() {
-                            chapter.translatedText =
-                                result['translatedText'] ?? '';
-                            chapter.status = 'done';
-                            ref
-                                .read(libraryProvider.notifier)
-                                .updateProject(project);
-                          });
-                        } catch (e) {
-                          setState(() {
-                            chapter.status = 'pending';
-                            ref
-                                .read(libraryProvider.notifier)
-                                .updateProject(project);
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Translation failed: \$e')),
-                          );
-                        }
+                        ref
+                            .read(translationProvider.notifier)
+                            .translateChapterOnly(project, chapter);
                       }
                     },
                     itemBuilder: (ctx) => [
@@ -166,7 +168,8 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
 
             // Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: _horizontalPadding),
               child: Row(
                 children: [
                   Expanded(
@@ -181,7 +184,7 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: _dividerGapWidth),
                   Expanded(
                     flex: rightFlex,
                     child: Row(
@@ -225,15 +228,15 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                 children: [
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
+                      horizontal: _horizontalPadding,
                       vertical: 16,
                     ),
-                    itemCount: sourceParagraphs.length,
+                    itemCount: _sourceParagraphs.length,
                     separatorBuilder: (ctx, i) => const SizedBox(height: 32),
                     itemBuilder: (ctx, i) {
-                      final source = sourceParagraphs[i];
-                      final target = i < targetParagraphs.length
-                          ? targetParagraphs[i]
+                      final source = _sourceParagraphs[i];
+                      final target = i < _targetParagraphs.length
+                          ? _targetParagraphs[i]
                           : '';
 
                       return Row(
@@ -246,7 +249,7 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                               style: const TextStyle(fontSize: 15, height: 1.8),
                             ),
                           ),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: _dividerGapWidth),
                           Expanded(
                             flex: rightFlex,
                             child: target.isEmpty
@@ -266,12 +269,15 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                       );
                     },
                   ),
-                  if (targetParagraphs.isEmpty)
+                  if (_targetParagraphs.isEmpty)
                     Positioned(
                       top: 16,
                       bottom: 16,
-                      left: 32 + (constraints.maxWidth - 88) * _splitRatio + 24,
-                      right: 32,
+                      left: _horizontalPadding +
+                          (constraints.maxWidth - _totalHorizontalInset) *
+                              _splitRatio +
+                          _dividerGapWidth,
+                      right: _horizontalPadding,
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
@@ -295,20 +301,22 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                   Positioned(
                     top: 0,
                     bottom: 0,
-                    left: 32 + (constraints.maxWidth - 88) * _splitRatio,
+                    left: _horizontalPadding +
+                        (constraints.maxWidth - _totalHorizontalInset) *
+                            _splitRatio,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.resizeLeftRight,
                       child: GestureDetector(
                         onHorizontalDragUpdate: (details) {
                           setState(() {
-                            _splitRatio +=
-                                details.delta.dx / (constraints.maxWidth - 88);
+                            _splitRatio += details.delta.dx /
+                                (constraints.maxWidth - _totalHorizontalInset);
                             if (_splitRatio < 0.2) _splitRatio = 0.2;
                             if (_splitRatio > 0.8) _splitRatio = 0.8;
                           });
                         },
                         child: Container(
-                          width: 24,
+                          width: _dividerGapWidth,
                           color: Colors.transparent, // Expand hit area
                           child: Center(
                             child: Container(

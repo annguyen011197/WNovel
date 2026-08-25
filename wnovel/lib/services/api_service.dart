@@ -1,5 +1,8 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
+
+final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();

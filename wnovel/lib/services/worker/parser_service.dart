@@ -4,6 +4,8 @@ import 'package:squadron/squadron.dart';
 import 'package:epubx/epubx.dart';
 import 'package:archive/archive.dart';
 
+import '../../models/project.dart';
+
 import 'parser_service.activator.g.dart';
 part 'parser_service.worker.g.dart';
 
@@ -49,7 +51,7 @@ base class ParserService {
         'originalText': text,
         'translatedText': '',
         'summary': '',
-        'status': 'pending',
+        'status': ChapterStatus.pending.name,
       });
     }
 

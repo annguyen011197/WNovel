@@ -323,7 +323,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                     ),
                     Text(
-                      '${project.chapters.where((c) => c.status == 'done').length}/${project.chapters.length}',
+                      '${project.chapters.where((c) => c.status == ChapterStatus.done).length}/${project.chapters.length}',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -426,10 +426,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildChapterStatusIcon(String status) {
-    if (status == 'done') {
+  Widget _buildChapterStatusIcon(ChapterStatus status) {
+    if (status == ChapterStatus.done) {
       return const Icon(Icons.check_circle, size: 14, color: Colors.green);
-    } else if (status == 'translating') {
+    } else if (status == ChapterStatus.translating) {
       return const Icon(Icons.sync, size: 14, color: Colors.blue);
     }
     return Icon(Icons.circle_outlined, size: 14, color: Colors.grey.shade400);
@@ -819,15 +819,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                         BatchConfigDialog(project: project),
                                   );
                               if (config != null) {
-                                final startIndex = config.startIndex;
-                                if (project.chapters[startIndex].status ==
-                                    'done') {
-                                  project.chapters[startIndex].status =
-                                      'pending';
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .updateProject(project);
-                                }
                                 ref
                                     .read(translationProvider.notifier)
                                     .startBatchTranslation(

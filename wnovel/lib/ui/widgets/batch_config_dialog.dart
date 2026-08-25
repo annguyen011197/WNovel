@@ -27,7 +27,7 @@ class _BatchConfigDialogState extends State<BatchConfigDialog> {
   void initState() {
     super.initState();
     // Default to the first pending chapter
-    _startIndex = widget.project.chapters.indexWhere((c) => c.status != 'done');
+    _startIndex = widget.project.chapters.indexWhere((c) => c.status != ChapterStatus.done);
     if (_startIndex == -1) _startIndex = 0;
 
     // Default count to remaining chapters

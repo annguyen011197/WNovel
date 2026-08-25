@@ -52,6 +52,18 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
     if (state.isTranslating) return;
 
     _cancelRequested = false;
+
+    // If the start chapter is already done, reset it to allow re-translation.
+    // This lets callers simply call startBatchTranslation without needing to
+    // mutate project state themselves.
+    if (startIndex < project.chapters.length &&
+        project.chapters[startIndex].status == ChapterStatus.done) {
+      project.chapters[startIndex] = project.chapters[startIndex].copyWith(
+        status: ChapterStatus.pending,
+      );
+      _updateProject(project);
+    }
+
     state = state.copyWith(
       isTranslating: true,
       startChapterIndex: startIndex,
@@ -75,7 +87,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
       // We bypass this check for the very first chapter of the batch (startIndex)
       // because the user explicitly chose to start there.
       if (chapterIndex > 0 && chapterIndex > startIndex) {
-        if (project.chapters[chapterIndex - 1].status != 'done') {
+        if (project.chapters[chapterIndex - 1].status != ChapterStatus.done) {
           state = state.copyWith(
             isTranslating: false,
             errorMessage: 'Translation halted: Previous chapter is not done.',
@@ -84,7 +96,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
         }
       }
 
-      if (chapter.status == 'done') {
+      if (chapter.status == ChapterStatus.done) {
         // Skip already translated chapters
         state = state.copyWith(
           currentChapterIndex: state.currentChapterIndex + 1,
@@ -92,8 +104,10 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
         continue;
       }
 
-      // We found a pending chapter
-      chapter.status = 'translating';
+      // We found a pending chapter — immutable update via copyWith
+      project.chapters[chapterIndex] = chapter.copyWith(
+        status: ChapterStatus.translating,
+      );
       _updateProject(project);
 
       try {
@@ -104,7 +118,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
           i >= 0 && previousSummaries.length < 2;
           i--
         ) {
-          if (project.chapters[i].status == 'done' &&
+          if (project.chapters[i].status == ChapterStatus.done &&
               project.chapters[i].summary.isNotEmpty) {
             previousSummaries.insert(0, project.chapters[i].summary);
           }
@@ -121,16 +135,18 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
             .toList();
 
         // API Call
-        final result = await ApiService().translateChapter(
+        final result = await _ref.read(apiServiceProvider).translateChapter(
           chapter.originalText,
           glossary,
           previousSummaries,
         );
 
-        // Update chapter
-        chapter.translatedText = result['translatedText'] ?? '';
-        chapter.summary = result['summary'] ?? '';
-        chapter.status = 'done';
+        // Update chapter — immutable update via copyWith
+        project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
+          translatedText: result['translatedText'] ?? '',
+          summary: result['summary'] ?? '',
+          status: ChapterStatus.done,
+        );
 
         // Add new characters (dummy parsing logic for now)
         final newCharactersList = result['newCharacters'] as List?;
@@ -161,7 +177,9 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
           await Future.delayed(const Duration(seconds: 15));
         }
       } catch (e) {
-        chapter.status = 'pending'; // revert
+        project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
+          status: ChapterStatus.pending,
+        ); // revert
         _updateProject(project);
         state = state.copyWith(
           isTranslating: false,
@@ -177,6 +195,47 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
     }
 
     state = state.copyWith(isTranslating: false);
+  }
+
+  /// Translates a single chapter without context ("translate only" mode).
+  /// Sets status -> translating, calls API, sets result or reverts on error.
+  Future<void> translateChapterOnly(Project project, Chapter chapter) async {
+    if (state.isTranslating) {
+      state = state.copyWith(
+        errorMessage: 'A translation is already in progress.',
+      );
+      return;
+    }
+
+    final chapterIndex = project.chapters.indexWhere((c) => c.id == chapter.id);
+    if (chapterIndex == -1) return;
+
+    // Mark as translating
+    project.chapters[chapterIndex] = chapter.copyWith(
+      status: ChapterStatus.translating,
+    );
+    _updateProject(project);
+
+    try {
+      final result = await _ref.read(apiServiceProvider).translateOnly(
+        chapter.originalText,
+      );
+
+      project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
+        translatedText: result['translatedText'] ?? '',
+        status: ChapterStatus.done,
+      );
+      _updateProject(project);
+    } catch (e) {
+      // Revert status on error
+      project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
+        status: ChapterStatus.pending,
+      );
+      _updateProject(project);
+      state = state.copyWith(
+        errorMessage: 'Translation failed: $e',
+      );
+    }
   }
 
   void cancelTranslation() {
