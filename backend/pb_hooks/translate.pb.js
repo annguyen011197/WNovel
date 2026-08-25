@@ -2,11 +2,11 @@ routerAdd("POST", "/api/translate", (e) => {
     const info = e.requestInfo(); // v0.23+
     
     // Auth check
-    if (!info.authRecord) {
+    if (!info.auth) {
         throw new UnauthorizedError("Authentication required.");
     }
 
-    const userId = info.authRecord.id;
+    const userId = info.auth.id;
     let body = {};
     try {
        // try v0.23 body reading

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wnovel/ui/screens/reader_screen.dart';
 
 import '../../providers/project_provider.dart';
 import '../../models/project.dart';
@@ -33,7 +34,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 thickness: 1,
                 color: Color(0xFFEEEEEE),
               ),
-              Expanded(child: _buildMainContent(context, library)),
+              Expanded(
+                child: SelectionArea(
+                  child: _buildMainContent(context, library),
+                ),
+              ),
             ],
           ),
           if (_isImporting)
@@ -129,67 +134,167 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _importMenu() {
-    showModalBottomSheet(
+    showDialog(
       context: context,
       builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.note_add),
-                title: const Text('New Blank Draft'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  ref
-                      .read(libraryProvider.notifier)
-                      .addProject(
-                        Project(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        ),
-                      );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.book),
-                title: const Text('Import EPUB'),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final p = await EpubService.importEpub(
-                    onStartParsing: () {
-                      if (mounted) setState(() => _isImporting = true);
-                    },
-                  );
-                  if (p != null) {
-                    ref.read(libraryProvider.notifier).addProject(p);
-                  }
-                  if (mounted) {
-                    setState(() => _isImporting = false);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.restore),
-                title: const Text('Import .wnovel Project'),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final p = await ProjectService.importProject(
-                    onStartParsing: () {
-                      if (mounted) setState(() => _isImporting = true);
-                    },
-                  );
-                  if (p != null) {
-                    ref.read(libraryProvider.notifier).addProject(p);
-                  }
-                  if (mounted) {
-                    setState(() => _isImporting = false);
-                  }
-                },
-              ),
-            ],
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 4,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 460),
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Create New Project',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                      splashRadius: 20,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Select how you would like to get started:',
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                _buildImportOption(
+                  ctx: ctx,
+                  icon: Icons.note_add_outlined,
+                  title: 'New Blank Draft',
+                  description: 'Start fresh with an empty project draft',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ref
+                        .read(libraryProvider.notifier)
+                        .addProject(
+                          Project(
+                            id: DateTime.now().millisecondsSinceEpoch
+                                .toString(),
+                          ),
+                        );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildImportOption(
+                  ctx: ctx,
+                  icon: Icons.book_outlined,
+                  title: 'Import EPUB',
+                  description: 'Parse chapters & content from an EPUB file',
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final p = await EpubService.importEpub(
+                      onStartParsing: () {
+                        if (mounted) setState(() => _isImporting = true);
+                      },
+                    );
+                    if (p != null) {
+                      ref.read(libraryProvider.notifier).addProject(p);
+                    }
+                    if (mounted) {
+                      setState(() => _isImporting = false);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildImportOption(
+                  ctx: ctx,
+                  icon: Icons.restore_outlined,
+                  title: 'Import .wnovel Project',
+                  description: 'Restore project structure from a backup file',
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final p = await ProjectService.importProject(
+                      onStartParsing: () {
+                        if (mounted) setState(() => _isImporting = true);
+                      },
+                    );
+                    if (p != null) {
+                      ref.read(libraryProvider.notifier).addProject(p);
+                    }
+                    if (mounted) {
+                      setState(() => _isImporting = false);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildImportOption({
+    required BuildContext ctx,
+    required IconData icon,
+    required String title,
+    required String description,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFFFAFAFA),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Icon(icon, size: 22, color: Colors.grey.shade800),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF222222),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
     );
   }
 
@@ -279,10 +384,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               // Project List
               if (filtered.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text('No projects found.'),
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(48.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9F9F9),
+                      border: Border.all(color: const Color(0xFFEEEEEE)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.folder_open,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No projects found.',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create a new project to get started.',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _importMenu,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create New Project'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               else
@@ -317,197 +464,213 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildProjectCard(Project project) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          // Cover placeholder
-          Container(
-            width: 48,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(4),
+    return InkWell(
+      onTap: () {
+        ref.read(activeProjectIdProvider.notifier).state = project.id;
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (ctx) => const ReaderScreen()),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            // Cover placeholder
+            Container(
+              width: 48,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(Icons.book, color: Colors.grey),
             ),
-            child: const Icon(Icons.book, color: Colors.grey),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-          // Info
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  project.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  project.author,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-
-          // Progress
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'PROGRESS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: project.progress,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
+            // Info
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${(project.progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    project.author,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Chapters
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'CHAPTERS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${project.chapters.where((c) => c.status == 'done').length} / ${project.chapters.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Status
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'STATUS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: project.status == 'COMPLETED'
-                        ? Colors.green.shade100
-                        : (project.status == 'IN PROGRESS'
-                              ? Colors.blue.shade100
-                              : Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    project.status,
+            // Progress
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'PROGRESS',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: project.status == 'COMPLETED'
-                          ? Colors.green.shade800
-                          : (project.status == 'IN PROGRESS'
-                                ? Colors.blue.shade800
-                                : Colors.grey.shade700),
+                      color: Colors.grey.shade500,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: project.progress,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${(project.progress * 100).toInt()}%',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            tooltip: 'Delete Project',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Delete Project'),
-                  content: Text('Are you sure you want to delete "${project.title}"?\nThis action cannot be undone.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
+
+            // Chapters
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'CHAPTERS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade500,
                     ),
-                    TextButton(
-                      onPressed: () {
-                        ref.read(libraryProvider.notifier).deleteProject(project.id);
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${project.chapters.where((c) => c.status == 'done').length} / ${project.chapters.length}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Status
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'STATUS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: project.status == 'COMPLETED'
+                          ? Colors.green.shade100
+                          : (project.status == 'IN PROGRESS'
+                                ? Colors.blue.shade100
+                                : Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      project.status,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: project.status == 'COMPLETED'
+                            ? Colors.green.shade800
+                            : (project.status == 'IN PROGRESS'
+                                  ? Colors.blue.shade800
+                                  : Colors.grey.shade700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              tooltip: 'Delete Project',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Project'),
+                    content: Text(
+                      'Are you sure you want to delete "${project.title}"?\nThis action cannot be undone.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ref
+                              .read(libraryProvider.notifier)
+                              .deleteProject(project.id);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
