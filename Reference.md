@@ -32,7 +32,6 @@ When a translation is triggered, the frontend calls `/api/translate` with a `cha
 2. **Prompt Assembly:** It builds a complex prompt injecting the raw chapter text, custom translation rules, the character list, and the previous summaries.
 3. **LLM Execution:** It securely fetches API keys from the `settings` collection and uses `$http.send()` to call either Google Gemini or OpenRouter. The prompt strictly demands a JSON output containing: `translatedText`, `summary`, `newCharacters`, and `newRelations`.
 4. **Data Persistence:** It parses the LLM's JSON response, updates the chapter record, inserts any newly discovered characters/relations into the database, calculates the exact token cost in VND, and logs the raw API payloads for debugging.
-5. **Global Lock:** A global `isTranslatingGlobal` variable is utilized to ensure that translations are strictly sequential, preventing race conditions where Chapter 3 finishes before Chapter 2 (which would corrupt the summary context).
 
 ### 3. Batch Processing
 To translate an entire book hands-free, the user can start a **Batch Translation**.

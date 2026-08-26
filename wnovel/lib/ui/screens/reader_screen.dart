@@ -803,6 +803,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () async {
+                              final isTranslating = ref.read(translationProvider).isTranslating;
+                              if (isTranslating) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('A translation is already running. Please cancel it first.'),
+                                  ),
+                                );
+                                return;
+                              }
+                              
                               if (!ApiService().isAuthenticated) {
                                 final loggedIn = await Navigator.of(context)
                                     .push(

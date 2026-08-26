@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'ui/screens/home_screen.dart';
 
+import 'ui/widgets/translation_overlay.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -28,6 +30,19 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
         useMaterial3: true,
       ),
+      builder: (context, child) {
+        return Overlay(
+          initialEntries: [
+            OverlayEntry(builder: (context) => child!),
+            OverlayEntry(
+              builder: (context) => const Directionality(
+                textDirection: TextDirection.ltr,
+                child: TranslationOverlayWidget(),
+              ),
+            ),
+          ],
+        );
+      },
       home: const HomeScreen(),
     );
   }

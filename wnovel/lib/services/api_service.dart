@@ -44,6 +44,7 @@ class ApiService {
     String rawText,
     List<Map<String, dynamic>> glossary,
     List<String> previousSummaries,
+    String targetLanguage,
   ) async {
     if (!isAuthenticated) {
       throw Exception('User is not authenticated.');
@@ -53,8 +54,7 @@ class ApiService {
       'rawText': rawText,
       'glossary': glossary,
       'previousSummaries': previousSummaries,
-      'provider':
-          'gemini', // or openrouter, depending on settings, hardcoded for now
+      'targetLanguage': targetLanguage,
     };
 
     final result = await pb.send('/api/translate', method: 'POST', body: body);
@@ -62,7 +62,7 @@ class ApiService {
     return result as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> translateOnly(String rawText) async {
+  Future<Map<String, dynamic>> translateOnly(String rawText, String targetLanguage) async {
     if (!isAuthenticated) {
       throw Exception('User is not authenticated.');
     }
@@ -72,7 +72,7 @@ class ApiService {
       'rawText': rawText,
       'glossary': [], // Empty glossary
       'previousSummaries': [], // Empty previous summaries
-      'provider': 'gemini', // or openrouter
+      'targetLanguage': targetLanguage,
       'translateOnly':
           true, // Optional flag if the backend wants to handle it differently
     };

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/project.dart';
 import '../../providers/project_provider.dart';
 import '../../providers/translation_provider.dart';
+import '../../services/api_service.dart';
+import '../screens/login_screen.dart';
 
 class ReaderMainContent extends ConsumerStatefulWidget {
   final Chapter chapter;
@@ -77,6 +79,7 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
     });
 
     final chapter = widget.chapter;
+    final isTranslating = ref.watch(translationProvider).isTranslating;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -124,11 +127,34 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                         ],
                       ),
                     ),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       final project = ref.read(activeProjectProvider);
                       if (project == null) return;
 
+                      if (!ApiService().isAuthenticated) {
+                        final loggedIn = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
+                        if (!context.mounted || loggedIn != true) return;
+                      }
+
                       if (value == 'following') {
+                        final isTranslating = ref
+                            .read(translationProvider)
+                            .isTranslating;
+                        if (isTranslating) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'A translation is already running. Please cancel it first.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
                         if (chapter.status == ChapterStatus.translating) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -144,11 +170,39 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                           ref
                               .read(translationProvider.notifier)
                               .startBatchTranslation(project, index, 1);
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              const SnackBar(
+                                content: Text('Translation started.'),
+                              ),
+                            );
                         }
                       } else if (value == 'only') {
+                        final isTranslating = ref
+                            .read(translationProvider)
+                            .isTranslating;
+                        if (isTranslating) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'A translation is already running. Please cancel it first.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
                         ref
                             .read(translationProvider.notifier)
                             .translateChapterOnly(project, chapter);
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(
+                              content: Text('Translation started.'),
+                            ),
+                          );
                       }
                     },
                     itemBuilder: (ctx) => [
@@ -168,8 +222,9 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
 
             // Header Row
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: _horizontalPadding),
+              padding: const EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -273,7 +328,8 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                     Positioned(
                       top: 16,
                       bottom: 16,
-                      left: _horizontalPadding +
+                      left:
+                          _horizontalPadding +
                           (constraints.maxWidth - _totalHorizontalInset) *
                               _splitRatio +
                           _dividerGapWidth,
@@ -287,12 +343,30 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Center(
-                          child: Text(
-                            'Waiting for translation...',
-                            style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isTranslating) ...[
+                                const SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    semanticsLabel: 'Translation in progress',
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              Text(
+                                isTranslating
+                                    ? 'Translation in progress...'
+                                    : 'Waiting for translation...',
+                                style: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -301,7 +375,8 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                   Positioned(
                     top: 0,
                     bottom: 0,
-                    left: _horizontalPadding +
+                    left:
+                        _horizontalPadding +
                         (constraints.maxWidth - _totalHorizontalInset) *
                             _splitRatio,
                     child: MouseRegion(
@@ -309,7 +384,8 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                       child: GestureDetector(
                         onHorizontalDragUpdate: (details) {
                           setState(() {
-                            _splitRatio += details.delta.dx /
+                            _splitRatio +=
+                                details.delta.dx /
                                 (constraints.maxWidth - _totalHorizontalInset);
                             if (_splitRatio < 0.2) _splitRatio = 0.2;
                             if (_splitRatio > 0.8) _splitRatio = 0.8;

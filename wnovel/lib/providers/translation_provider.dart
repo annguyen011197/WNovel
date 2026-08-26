@@ -7,33 +7,41 @@ import 'project_provider.dart';
 
 class TranslationState {
   final bool isTranslating;
+  final String? projectId;
   final int currentChapterIndex;
   final int startChapterIndex;
   final int targetChapterCount;
   final String? errorMessage;
+  final bool isMinimized;
 
   TranslationState({
     this.isTranslating = false,
+    this.projectId,
     this.currentChapterIndex = -1,
     this.startChapterIndex = -1,
     this.targetChapterCount = 0,
     this.errorMessage,
+    this.isMinimized = false,
   });
 
   TranslationState copyWith({
     bool? isTranslating,
+    String? projectId,
     int? currentChapterIndex,
     int? startChapterIndex,
     int? targetChapterCount,
     String? errorMessage,
+    bool? isMinimized,
   }) {
     return TranslationState(
       isTranslating: isTranslating ?? this.isTranslating,
+      projectId: projectId ?? this.projectId,
       currentChapterIndex: currentChapterIndex ?? this.currentChapterIndex,
       startChapterIndex: startChapterIndex ?? this.startChapterIndex,
       targetChapterCount: targetChapterCount ?? this.targetChapterCount,
       errorMessage:
           errorMessage, // We don't use ?? here to allow clearing the error
+      isMinimized: isMinimized ?? this.isMinimized,
     );
   }
 }
@@ -66,10 +74,12 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
 
     state = state.copyWith(
       isTranslating: true,
+      projectId: project.id,
       startChapterIndex: startIndex,
       currentChapterIndex: startIndex,
       targetChapterCount: count,
       errorMessage: null,
+      isMinimized: false,
     );
 
     int translatedCount = 0;
@@ -135,33 +145,39 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
             .toList();
 
         // API Call
-        final result = await _ref.read(apiServiceProvider).translateChapter(
-          chapter.originalText,
-          glossary,
-          previousSummaries,
-        );
+        final result = await _ref
+            .read(apiServiceProvider)
+            .translateChapter(
+              chapter.originalText,
+              glossary,
+              previousSummaries,
+              project.targetLanguage,
+            );
 
         // Update chapter — immutable update via copyWith
-        project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
-          translatedText: result['translatedText'] ?? '',
-          summary: result['summary'] ?? '',
-          status: ChapterStatus.done,
-        );
+        project.chapters[chapterIndex] = project.chapters[chapterIndex]
+            .copyWith(
+              translatedText: result['translatedText'] ?? '',
+              summary: result['summary'] ?? '',
+              status: ChapterStatus.done,
+            );
 
         // Add new characters (dummy parsing logic for now)
         final newCharactersList = result['newCharacters'] as List?;
         if (newCharactersList != null) {
           for (var charMap in newCharactersList) {
-            project.characters.add(
-              Character(
-                id:
-                    DateTime.now().millisecondsSinceEpoch.toString() +
-                    charMap['originalName'],
-                originalName: charMap['originalName'],
-                translatedName: charMap['translatedName'],
-                description: charMap['description'] ?? '',
-              ),
-            );
+            final name = charMap['name'] ?? '';
+            final targetName = charMap['targetName'] ?? '';
+            if (name.isNotEmpty) {
+              project.characters.add(
+                Character(
+                  id: DateTime.now().millisecondsSinceEpoch.toString() + name,
+                  originalName: name,
+                  translatedName: targetName,
+                  description: charMap['description'] ?? '',
+                ),
+              );
+            }
           }
         }
 
@@ -177,9 +193,8 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
           await Future.delayed(const Duration(seconds: 15));
         }
       } catch (e) {
-        project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
-          status: ChapterStatus.pending,
-        ); // revert
+        project.chapters[chapterIndex] = project.chapters[chapterIndex]
+            .copyWith(status: ChapterStatus.pending); // revert
         _updateProject(project);
         state = state.copyWith(
           isTranslating: false,
@@ -215,17 +230,27 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
       status: ChapterStatus.translating,
     );
     _updateProject(project);
+    state = state.copyWith(
+      isTranslating: true,
+      projectId: project.id,
+      startChapterIndex: chapterIndex,
+      currentChapterIndex: chapterIndex,
+      targetChapterCount: 1,
+      errorMessage: null,
+      isMinimized: false,
+    );
 
     try {
-      final result = await _ref.read(apiServiceProvider).translateOnly(
-        chapter.originalText,
-      );
+      final result = await _ref
+          .read(apiServiceProvider)
+          .translateOnly(chapter.originalText, project.targetLanguage);
 
       project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
         translatedText: result['translatedText'] ?? '',
         status: ChapterStatus.done,
       );
       _updateProject(project);
+      state = state.copyWith(isTranslating: false);
     } catch (e) {
       // Revert status on error
       project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
@@ -233,6 +258,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
       );
       _updateProject(project);
       state = state.copyWith(
+        isTranslating: false,
         errorMessage: 'Translation failed: $e',
       );
     }
@@ -240,6 +266,10 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
 
   void cancelTranslation() {
     _cancelRequested = true;
+  }
+
+  void toggleMinimize() {
+    state = state.copyWith(isMinimized: !state.isMinimized);
   }
 
   void _updateProject(Project project) {

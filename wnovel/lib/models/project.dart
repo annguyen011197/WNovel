@@ -132,6 +132,7 @@ class Project {
   String title;
   String author;
   String? coverUrl;
+  String targetLanguage;
   List<Chapter> chapters;
   List<Character> characters;
   List<Relation> relations;
@@ -141,6 +142,7 @@ class Project {
     this.title = 'Untitled Draft',
     this.author = 'Unknown Author',
     this.coverUrl,
+    this.targetLanguage = 'Vietnamese',
     this.chapters = const [],
     this.characters = const [],
     this.relations = const [],
@@ -164,6 +166,7 @@ class Project {
         'title': title,
         'author': author,
         'coverUrl': coverUrl,
+        'targetLanguage': targetLanguage,
         'chapters': chapters.map((c) => c.toJson()).toList(),
         'characters': characters.map((c) => c.toJson()).toList(),
         'relations': relations.map((r) => r.toJson()).toList(),
@@ -174,6 +177,7 @@ class Project {
         title: json['title'] ?? 'Untitled Draft',
         author: json['author'] ?? 'Unknown Author',
         coverUrl: json['coverUrl'],
+        targetLanguage: json['targetLanguage'] ?? 'Vietnamese',
         chapters: (json['chapters'] as List?)?.map((c) => Chapter.fromJson(c)).toList() ?? [],
         characters: (json['characters'] as List?)?.map((c) => Character.fromJson(c)).toList() ?? [],
         relations: (json['relations'] as List?)?.map((r) => Relation.fromJson(r)).toList() ?? [],
