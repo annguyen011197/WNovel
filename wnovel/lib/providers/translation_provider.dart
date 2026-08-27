@@ -152,12 +152,14 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
               glossary,
               previousSummaries,
               project.targetLanguage,
+              chapterTitle: chapter.title,
             );
 
         // Update chapter — immutable update via copyWith
         project.chapters[chapterIndex] = project.chapters[chapterIndex]
             .copyWith(
               translatedText: result['translatedText'] ?? '',
+              translatedTitle: result['translatedTitle'] ?? '',
               summary: result['summary'] ?? '',
               status: ChapterStatus.done,
             );
@@ -243,10 +245,15 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
     try {
       final result = await _ref
           .read(apiServiceProvider)
-          .translateOnly(chapter.originalText, project.targetLanguage);
+          .translateOnly(
+            chapter.originalText,
+            project.targetLanguage,
+            chapterTitle: chapter.title,
+          );
 
       project.chapters[chapterIndex] = project.chapters[chapterIndex].copyWith(
         translatedText: result['translatedText'] ?? '',
+        translatedTitle: result['translatedTitle'] ?? '',
         status: ChapterStatus.done,
       );
       _updateProject(project);

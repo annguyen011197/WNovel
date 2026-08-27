@@ -23,7 +23,7 @@ routerAdd("POST", "/api/translate", (e) => {
     body = info.body || {};
   }
 
-  const { rawText, glossary, previousSummaries, targetLanguage } = body;
+  const { rawText, chapterTitle, glossary, previousSummaries, targetLanguage } = body;
 
   const lang = targetLanguage || "Vietnamese";
 
@@ -130,6 +130,7 @@ You MUST return ONLY valid JSON.
 The JSON must have exactly the following structure:
 
 {
+  "translatedTitle": "string",
   "translatedText": "string",
   "summary": "string",
   "newCharacters": [
@@ -168,6 +169,9 @@ You are a professional literary translator specializing in Chinese fiction novel
 
 Translate the chapter below from Chinese into ${lang}.
 
+Translate this chapter title into ${lang} as a concise, natural literary title:
+${chapterTitle || "(no title provided)"}
+
 The translation must be written in ${lang}.
 
 Do NOT return the original Chinese text instead of translating it.
@@ -203,6 +207,10 @@ ${previousContext}
 ${glossaryContext}
 
 [OUTPUT FIELD RULES]
+
+translatedTitle:
+- Natural translation of the provided chapter title into ${lang}.
+- Return an empty string only when no chapter title was provided.
 
 translatedText:
 - Full translation into ${lang}.
@@ -363,6 +371,7 @@ ${rawText}
   }
 
   let translatedText = "";
+  let translatedTitle = "";
   let summary = "";
   let newCharacters = [];
   let newRelations = [];
@@ -386,6 +395,9 @@ ${rawText}
     translatedText =
       typeof parsed.translatedText === "string" ? parsed.translatedText : "";
 
+    translatedTitle =
+      typeof parsed.translatedTitle === "string" ? parsed.translatedTitle : "";
+
     summary = typeof parsed.summary === "string" ? parsed.summary : "";
 
     newCharacters = Array.isArray(parsed.newCharacters)
@@ -402,6 +414,7 @@ ${rawText}
 
     // Fallback
     translatedText = content;
+    translatedTitle = "";
     summary = "";
     newCharacters = [];
     newRelations = [];
@@ -479,6 +492,7 @@ ${rawText}
   // ---------------------------------------------------------
 
   return e.json(200, {
+    translatedTitle,
     translatedText,
     summary,
     newCharacters,

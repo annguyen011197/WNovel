@@ -6,6 +6,7 @@ import '../../providers/translation_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/project.dart';
 import '../widgets/reader_main_content.dart';
+import '../widgets/glossary_workspace.dart';
 
 import '../widgets/batch_config_dialog.dart';
 import 'login_screen.dart';
@@ -21,6 +22,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   String? _selectedChapterId;
   bool _isLibraryExpanded = true;
   bool _isGlossaryExpanded = false;
+  bool _showGlossary = false;
   bool _isSystemLogExpanded = true;
   int _overviewPage = 0;
   static const int _chaptersPerPage = 20;
@@ -74,7 +76,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 children: [
                   _buildTopBar(project, chapter),
                   Expanded(
-                    child: chapter == null
+                    child: _showGlossary
+                        ? GlossaryWorkspace(project: project)
+                        : chapter == null
                         ? _buildProjectOverview(project)
                         : ReaderMainContent(chapter: chapter),
                   ),
@@ -141,7 +145,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   if (index == 0) {
                     return InkWell(
                       onTap: () {
-                        setState(() => _selectedChapterId = null);
+                        setState(() {
+                          _selectedChapterId = null;
+                          _showGlossary = false;
+                        });
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -197,7 +204,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   final isSelected = ch.id == _selectedChapterId;
                   return InkWell(
                     onTap: () {
-                      setState(() => _selectedChapterId = ch.id);
+                      setState(() {
+                        _selectedChapterId = ch.id;
+                        _showGlossary = false;
+                      });
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -257,8 +267,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
           // Glossary Section
           InkWell(
-            onTap: () =>
-                setState(() => _isGlossaryExpanded = !_isGlossaryExpanded),
+            onTap: () => setState(() {
+              _isGlossaryExpanded = !_isGlossaryExpanded;
+              _showGlossary = true;
+              _selectedChapterId = null;
+            }),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -308,7 +321,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
+                    color: _showGlossary ? Colors.blue : Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -540,6 +553,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             onTap: () {
               setState(() {
                 _selectedChapterId = null;
+                _showGlossary = false;
               });
             },
             child: Text(
@@ -803,16 +817,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () async {
-                              final isTranslating = ref.read(translationProvider).isTranslating;
+                              final isTranslating = ref
+                                  .read(translationProvider)
+                                  .isTranslating;
                               if (isTranslating) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('A translation is already running. Please cancel it first.'),
+                                    content: Text(
+                                      'A translation is already running. Please cancel it first.',
+                                    ),
                                   ),
                                 );
                                 return;
                               }
-                              
+
                               if (!ApiService().isAuthenticated) {
                                 final loggedIn = await Navigator.of(context)
                                     .push(

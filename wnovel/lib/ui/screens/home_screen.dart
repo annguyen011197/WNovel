@@ -6,6 +6,8 @@ import '../../providers/project_provider.dart';
 import '../../models/project.dart';
 import '../../services/epub_service.dart';
 import '../../services/project_service.dart';
+import '../../services/api_service.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -67,6 +69,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildSidebar(BuildContext context) {
+    final api = ApiService();
+    final user = api.pb.authStore.record;
+    final isAuthenticated = api.isAuthenticated && user != null;
+    final userName = (user?.data['name'] as String?)?.trim();
+    final userEmail = (user?.data['email'] as String?)?.trim() ?? '';
+    final accountLabel = userName == null || userName.isEmpty
+        ? (userEmail.isEmpty ? 'Signed in' : userEmail)
+        : userName;
+
     return Container(
       width: 240,
       color: const Color(0xFFF9F9F9),
@@ -106,12 +117,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           const Spacer(),
+          if (isAuthenticated) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: const Color(0xFFDCEBE2),
+                    child: Text(
+                      accountLabel.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFF275B43),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          accountLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF25362D),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (userName != null &&
+                            userName.isNotEmpty &&
+                            userEmail.isNotEmpty)
+                          Text(
+                            userEmail,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 11,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _sidebarItem(Icons.logout_rounded, 'Sign out', onTap: _signOut),
+          ] else
+            _sidebarItem(Icons.login_rounded, 'Sign in', onTap: _openAuth),
+          const Divider(height: 24, indent: 16, endIndent: 16),
           _sidebarItem(Icons.add, 'Import File', onTap: _importMenu),
           _sidebarItem(Icons.delete_outline, 'Trash'),
           const SizedBox(height: 16),
         ],
       ),
     );
+  }
+
+  void _signOut() {
+    ApiService().logout();
+    if (mounted) setState(() {});
   }
 
   Widget _sidebarItem(IconData icon, String title, {VoidCallback? onTap}) {
@@ -131,6 +200,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openAuth() async {
+    final didAuthenticate = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    if (didAuthenticate == true && mounted) {
+      setState(() {});
+    }
   }
 
   void _importMenu() {

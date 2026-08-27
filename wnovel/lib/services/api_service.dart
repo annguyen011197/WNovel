@@ -21,11 +21,17 @@ class ApiService {
     return await pb.collection('users').authWithPassword(email, password);
   }
 
-  Future<RecordModel> signUp(String email, String password) async {
+  Future<RecordModel> signUp(
+    String email,
+    String password, {
+    String? fullName,
+  }) async {
     final body = <String, dynamic>{
       "email": email,
       "password": password,
       "passwordConfirm": password,
+      if (fullName != null && fullName.trim().isNotEmpty)
+        "name": fullName.trim(),
     };
     final record = await pb.collection('users').create(body: body);
     // Automatically login after successful sign up
@@ -44,8 +50,9 @@ class ApiService {
     String rawText,
     List<Map<String, dynamic>> glossary,
     List<String> previousSummaries,
-    String targetLanguage,
-  ) async {
+    String targetLanguage, {
+    String chapterTitle = '',
+  }) async {
     if (!isAuthenticated) {
       throw Exception('User is not authenticated.');
     }
@@ -55,6 +62,7 @@ class ApiService {
       'glossary': glossary,
       'previousSummaries': previousSummaries,
       'targetLanguage': targetLanguage,
+      'chapterTitle': chapterTitle,
     };
 
     final result = await pb.send('/api/translate', method: 'POST', body: body);
@@ -62,7 +70,11 @@ class ApiService {
     return result as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> translateOnly(String rawText, String targetLanguage) async {
+  Future<Map<String, dynamic>> translateOnly(
+    String rawText,
+    String targetLanguage, {
+    String chapterTitle = '',
+  }) async {
     if (!isAuthenticated) {
       throw Exception('User is not authenticated.');
     }
@@ -75,6 +87,7 @@ class ApiService {
       'targetLanguage': targetLanguage,
       'translateOnly':
           true, // Optional flag if the backend wants to handle it differently
+      'chapterTitle': chapterTitle,
     };
 
     final result = await pb.send('/api/translate', method: 'POST', body: body);

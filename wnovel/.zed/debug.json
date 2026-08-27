@@ -1,0 +1,22 @@
+[
+  {
+    "adapter": "flutter",
+    "label": "Launch iOS Simulator",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "3B852482-10FB-418E-A961-FD5F88930FFA"
+  },
+  {
+    "adapter": "flutter",
+    "label": "Launch Web Server",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "chrome",
+    "args": [
+      "-d",
+      "web-server",
+      "--web-port",
+      "8080"
+    ]
+  }
+]

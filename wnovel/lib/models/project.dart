@@ -20,6 +20,7 @@ enum ChapterStatus {
 class Chapter {
   final String id;
   final String title;
+  String translatedTitle;
   final String originalText;
   String translatedText;
   String summary;
@@ -29,6 +30,7 @@ class Chapter {
     required this.id,
     required this.title,
     required this.originalText,
+    this.translatedTitle = '',
     this.translatedText = '',
     this.summary = '',
     this.status = ChapterStatus.pending,
@@ -38,6 +40,7 @@ class Chapter {
     String? id,
     String? title,
     String? originalText,
+    String? translatedTitle,
     String? translatedText,
     String? summary,
     ChapterStatus? status,
@@ -46,6 +49,7 @@ class Chapter {
       id: id ?? this.id,
       title: title ?? this.title,
       originalText: originalText ?? this.originalText,
+      translatedTitle: translatedTitle ?? this.translatedTitle,
       translatedText: translatedText ?? this.translatedText,
       summary: summary ?? this.summary,
       status: status ?? this.status,
@@ -53,22 +57,24 @@ class Chapter {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'originalText': originalText,
-        'translatedText': translatedText,
-        'summary': summary,
-        'status': status.toJson(),
-      };
+    'id': id,
+    'title': title,
+    'originalText': originalText,
+    'translatedTitle': translatedTitle,
+    'translatedText': translatedText,
+    'summary': summary,
+    'status': status.toJson(),
+  };
 
   factory Chapter.fromJson(Map<dynamic, dynamic> json) => Chapter(
-        id: json['id'],
-        title: json['title'],
-        originalText: json['originalText'],
-        translatedText: json['translatedText'] ?? '',
-        summary: json['summary'] ?? '',
-        status: ChapterStatus.fromJson(json['status']),
-      );
+    id: json['id'],
+    title: json['title'],
+    originalText: json['originalText'],
+    translatedTitle: json['translatedTitle'] ?? '',
+    translatedText: json['translatedText'] ?? '',
+    summary: json['summary'] ?? '',
+    status: ChapterStatus.fromJson(json['status']),
+  );
 }
 
 class Character {
@@ -85,18 +91,18 @@ class Character {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'originalName': originalName,
-        'translatedName': translatedName,
-        'description': description,
-      };
+    'id': id,
+    'originalName': originalName,
+    'translatedName': translatedName,
+    'description': description,
+  };
 
   factory Character.fromJson(Map<dynamic, dynamic> json) => Character(
-        id: json['id'],
-        originalName: json['originalName'],
-        translatedName: json['translatedName'],
-        description: json['description'],
-      );
+    id: json['id'],
+    originalName: json['originalName'],
+    translatedName: json['translatedName'],
+    description: json['description'],
+  );
 }
 
 class Relation {
@@ -113,18 +119,18 @@ class Relation {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'charA': charA,
-        'charB': charB,
-        'relationship': relationship,
-      };
+    'id': id,
+    'charA': charA,
+    'charB': charB,
+    'relationship': relationship,
+  };
 
   factory Relation.fromJson(Map<dynamic, dynamic> json) => Relation(
-        id: json['id'],
-        charA: json['charA'],
-        charB: json['charB'],
-        relationship: json['relationship'],
-      );
+    id: json['id'],
+    charA: json['charA'],
+    charB: json['charB'],
+    relationship: json['relationship'],
+  );
 }
 
 class Project {
@@ -150,7 +156,9 @@ class Project {
 
   double get progress {
     if (chapters.isEmpty) return 0.0;
-    int completed = chapters.where((c) => c.status == ChapterStatus.done).length;
+    int completed = chapters
+        .where((c) => c.status == ChapterStatus.done)
+        .length;
     return completed / chapters.length;
   }
 
@@ -162,24 +170,34 @@ class Project {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'author': author,
-        'coverUrl': coverUrl,
-        'targetLanguage': targetLanguage,
-        'chapters': chapters.map((c) => c.toJson()).toList(),
-        'characters': characters.map((c) => c.toJson()).toList(),
-        'relations': relations.map((r) => r.toJson()).toList(),
-      };
+    'id': id,
+    'title': title,
+    'author': author,
+    'coverUrl': coverUrl,
+    'targetLanguage': targetLanguage,
+    'chapters': chapters.map((c) => c.toJson()).toList(),
+    'characters': characters.map((c) => c.toJson()).toList(),
+    'relations': relations.map((r) => r.toJson()).toList(),
+  };
 
   factory Project.fromJson(Map<dynamic, dynamic> json) => Project(
-        id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        title: json['title'] ?? 'Untitled Draft',
-        author: json['author'] ?? 'Unknown Author',
-        coverUrl: json['coverUrl'],
-        targetLanguage: json['targetLanguage'] ?? 'Vietnamese',
-        chapters: (json['chapters'] as List?)?.map((c) => Chapter.fromJson(c)).toList() ?? [],
-        characters: (json['characters'] as List?)?.map((c) => Character.fromJson(c)).toList() ?? [],
-        relations: (json['relations'] as List?)?.map((r) => Relation.fromJson(r)).toList() ?? [],
-      );
+    id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+    title: json['title'] ?? 'Untitled Draft',
+    author: json['author'] ?? 'Unknown Author',
+    coverUrl: json['coverUrl'],
+    targetLanguage: json['targetLanguage'] ?? 'Vietnamese',
+    chapters:
+        (json['chapters'] as List?)?.map((c) => Chapter.fromJson(c)).toList() ??
+        [],
+    characters:
+        (json['characters'] as List?)
+            ?.map((c) => Character.fromJson(c))
+            .toList() ??
+        [],
+    relations:
+        (json['relations'] as List?)
+            ?.map((r) => Relation.fromJson(r))
+            .toList() ??
+        [],
+  );
 }

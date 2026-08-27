@@ -229,14 +229,29 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                 children: [
                   Expanded(
                     flex: leftFlex,
-                    child: Text(
-                      'SOURCE TEXT (ZH)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade500,
-                        letterSpacing: 1.2,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SOURCE TEXT (ZH)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade500,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          chapter.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: _dividerGapWidth),
@@ -245,14 +260,31 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'TARGET TEXT (VI) - DRAFT',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade500,
-                            letterSpacing: 1.2,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'TARGET TEXT (VI) - DRAFT',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade500,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              chapter.translatedTitle.isEmpty
+                                  ? '—'
+                                  : chapter.translatedTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                         Row(
                           children: [
@@ -281,96 +313,98 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
             Expanded(
               child: Stack(
                 children: [
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: _horizontalPadding,
-                      vertical: 16,
-                    ),
-                    itemCount: _sourceParagraphs.length,
-                    separatorBuilder: (ctx, i) => const SizedBox(height: 32),
-                    itemBuilder: (ctx, i) {
-                      final source = _sourceParagraphs[i];
-                      final target = i < _targetParagraphs.length
-                          ? _targetParagraphs[i]
-                          : '';
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: leftFlex,
-                            child: Text(
-                              source,
-                              style: const TextStyle(fontSize: 15, height: 1.8),
-                            ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: leftFlex,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(
+                            _horizontalPadding,
+                            16,
+                            0,
+                            32,
                           ),
-                          const SizedBox(width: _dividerGapWidth),
-                          Expanded(
-                            flex: rightFlex,
-                            child: target.isEmpty
-                                ? const SizedBox()
-                                : Container(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Text(
-                                      target,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        height: 1.8,
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  if (_targetParagraphs.isEmpty)
-                    Positioned(
-                      top: 16,
-                      bottom: 16,
-                      left:
-                          _horizontalPadding +
-                          (constraints.maxWidth - _totalHorizontalInset) *
-                              _splitRatio +
-                          _dividerGapWidth,
-                      right: _horizontalPadding,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isTranslating) ...[
-                                const SizedBox(
-                                  width: 28,
-                                  height: 28,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    semanticsLabel: 'Translation in progress',
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                              Text(
-                                isTranslating
-                                    ? 'Translation in progress...'
-                                    : 'Waiting for translation...',
-                                style: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
+                          itemCount: _sourceParagraphs.length,
+                          separatorBuilder: (ctx, i) =>
+                              const SizedBox(height: 32),
+                          itemBuilder: (ctx, i) => Text(
+                            _sourceParagraphs[i],
+                            style: const TextStyle(fontSize: 15, height: 1.8),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: _dividerGapWidth),
+                      Expanded(
+                        flex: rightFlex,
+                        child: Stack(
+                          children: [
+                            if (_targetParagraphs.isNotEmpty)
+                              ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(
+                                  0,
+                                  16,
+                                  _horizontalPadding,
+                                  32,
+                                ),
+                                itemCount: _targetParagraphs.length,
+                                separatorBuilder: (ctx, i) =>
+                                    const SizedBox(height: 32),
+                                itemBuilder: (ctx, i) => Text(
+                                  _targetParagraphs[i],
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    height: 1.8,
+                                  ),
+                                ),
+                              ),
+                            if (_targetParagraphs.isEmpty)
+                              Positioned.fill(
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isTranslating) ...[
+                                          const SizedBox(
+                                            width: 28,
+                                            height: 28,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 3,
+                                              semanticsLabel:
+                                                  'Translation in progress',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        Text(
+                                          isTranslating
+                                              ? 'Translation in progress...'
+                                              : 'Waiting for translation...',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade400,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   // Continuous Split Pane Divider
                   Positioned(
                     top: 0,
