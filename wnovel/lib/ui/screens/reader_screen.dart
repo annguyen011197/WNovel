@@ -239,7 +239,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           ),
                           Expanded(
                             child: Text(
-                              ch.title,
+                              ch.translatedTitle.isNotEmpty ? ch.translatedTitle : ch.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -570,7 +570,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
             const SizedBox(width: 8),
             Text(
-              chapter.title,
+              chapter.translatedTitle.isNotEmpty ? chapter.translatedTitle : chapter.title,
               style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             ),
           ],

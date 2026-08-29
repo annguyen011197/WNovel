@@ -31,10 +31,22 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
   String _lastOriginalText = '';
   String _lastTranslatedText = '';
 
+  bool _isEditingTitle = false;
+  late TextEditingController _titleController;
+
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController(
+      text: widget.chapter.translatedTitle,
+    );
     _updateParagraphs(widget.chapter);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
   }
 
   @override
@@ -43,6 +55,10 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
     if (oldWidget.chapter.originalText != widget.chapter.originalText ||
         oldWidget.chapter.translatedText != widget.chapter.translatedText) {
       _updateParagraphs(widget.chapter);
+    }
+    if (oldWidget.chapter.translatedTitle != widget.chapter.translatedTitle &&
+        !_isEditingTitle) {
+      _titleController.text = widget.chapter.translatedTitle;
     }
   }
 
@@ -260,31 +276,102 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'TARGET TEXT (VI) - DRAFT',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade500,
-                                letterSpacing: 1.2,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TARGET TEXT (VI) - DRAFT',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade500,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              chapter.translatedTitle.isEmpty
-                                  ? '—'
-                                  : chapter.translatedTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                              const SizedBox(height: 5),
+                              _isEditingTitle
+                                  ? Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextField(
+                                            controller: _titleController,
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            decoration: const InputDecoration(
+                                              isDense: true,
+                                              contentPadding: EdgeInsets.zero,
+                                              border: InputBorder.none,
+                                              hintText:
+                                                  'Enter translated title',
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.check,
+                                            color: Colors.green,
+                                            size: 20,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isEditingTitle = false;
+                                              chapter.translatedTitle =
+                                                  _titleController.text;
+                                              final project = ref.read(
+                                                activeProjectProvider,
+                                              );
+                                              if (project != null) {
+                                                ref
+                                                    .read(
+                                                      libraryProvider.notifier,
+                                                    )
+                                                    .updateProject(project);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    )
+                                  : Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            chapter.translatedTitle.isEmpty
+                                                ? '—'
+                                                : chapter.translatedTitle,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isEditingTitle = true;
+                                              _titleController.text =
+                                                  chapter.translatedTitle;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                            ],
+                          ),
                         ),
                         Row(
                           children: [

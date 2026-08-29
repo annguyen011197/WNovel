@@ -2,3 +2,4 @@ backend/pb_data/
 .DS_Store
 backend/pocketbase
 .codex/*
+scripts/*
