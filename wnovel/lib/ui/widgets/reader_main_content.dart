@@ -236,6 +236,48 @@ class _ReaderMainContentState extends ConsumerState<ReaderMainContent> {
               ),
             ),
 
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
+              ),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: chapter.skipTranslation,
+                    onChanged: (value) {
+                      final project = ref.read(activeProjectProvider);
+                      if (project == null || value == null) return;
+
+                      final updatedChapter = chapter.copyWith(
+                        skipTranslation: value,
+                      );
+                      final updatedProject = project.copyWith(
+                        chapters: project.chapters
+                            .map(
+                              (item) => item.id == updatedChapter.id
+                                  ? updatedChapter
+                                  : item,
+                            )
+                            .toList(),
+                      );
+                      ref
+                          .read(libraryProvider.notifier)
+                          .updateProject(updatedProject);
+                    },
+                  ),
+                  const Text(
+                    'No translation needed',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Show original content in Reader mode',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+
             // Header Row
             Padding(
               padding: const EdgeInsets.symmetric(

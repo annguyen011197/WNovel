@@ -25,6 +25,7 @@ class Chapter {
   String translatedText;
   String summary;
   ChapterStatus status;
+  bool skipTranslation;
 
   Chapter({
     required this.id,
@@ -34,6 +35,7 @@ class Chapter {
     this.translatedText = '',
     this.summary = '',
     this.status = ChapterStatus.pending,
+    this.skipTranslation = false,
   });
 
   Chapter copyWith({
@@ -44,6 +46,7 @@ class Chapter {
     String? translatedText,
     String? summary,
     ChapterStatus? status,
+    bool? skipTranslation,
   }) {
     return Chapter(
       id: id ?? this.id,
@@ -53,6 +56,7 @@ class Chapter {
       translatedText: translatedText ?? this.translatedText,
       summary: summary ?? this.summary,
       status: status ?? this.status,
+      skipTranslation: skipTranslation ?? this.skipTranslation,
     );
   }
 
@@ -64,6 +68,7 @@ class Chapter {
     'translatedText': translatedText,
     'summary': summary,
     'status': status.toJson(),
+    'skipTranslation': skipTranslation,
   };
 
   factory Chapter.fromJson(Map<dynamic, dynamic> json) => Chapter(
@@ -74,6 +79,7 @@ class Chapter {
     translatedText: json['translatedText'] ?? '',
     summary: json['summary'] ?? '',
     status: ChapterStatus.fromJson(json['status']),
+    skipTranslation: json['skipTranslation'] ?? false,
   );
 }
 
@@ -154,10 +160,32 @@ class Project {
     this.relations = const [],
   });
 
+  Project copyWith({
+    String? id,
+    String? title,
+    String? author,
+    String? coverUrl,
+    String? targetLanguage,
+    List<Chapter>? chapters,
+    List<Character>? characters,
+    List<Relation>? relations,
+  }) {
+    return Project(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      coverUrl: coverUrl ?? this.coverUrl,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+      chapters: chapters ?? this.chapters,
+      characters: characters ?? this.characters,
+      relations: relations ?? this.relations,
+    );
+  }
+
   double get progress {
     if (chapters.isEmpty) return 0.0;
     int completed = chapters
-        .where((c) => c.status == ChapterStatus.done)
+        .where((c) => c.status == ChapterStatus.done || c.skipTranslation)
         .length;
     return completed / chapters.length;
   }

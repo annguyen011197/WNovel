@@ -9,10 +9,13 @@ import '../widgets/reader_main_content.dart';
 import '../widgets/glossary_workspace.dart';
 
 import '../widgets/batch_config_dialog.dart';
+import 'ebook_reader_screen.dart';
 import 'login_screen.dart';
 
 class ReaderScreen extends ConsumerStatefulWidget {
-  const ReaderScreen({super.key});
+  final String? initialChapterId;
+
+  const ReaderScreen({super.key, this.initialChapterId});
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -30,6 +33,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedChapterId = widget.initialChapterId;
   }
 
   @override
@@ -239,7 +243,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           ),
                           Expanded(
                             child: Text(
-                              ch.translatedTitle.isNotEmpty ? ch.translatedTitle : ch.title,
+                              ch.translatedTitle.isNotEmpty
+                                  ? ch.translatedTitle
+                                  : ch.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -254,7 +260,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildChapterStatusIcon(ch.status),
+                          _buildChapterStatusIcon(ch),
                         ],
                       ),
                     ),
@@ -439,10 +445,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildChapterStatusIcon(ChapterStatus status) {
-    if (status == ChapterStatus.done) {
+  Widget _buildChapterStatusIcon(Chapter chapter) {
+    if (chapter.skipTranslation) {
+      return const Icon(
+        Icons.visibility_outlined,
+        size: 14,
+        color: Colors.blueGrey,
+      );
+    }
+    if (chapter.status == ChapterStatus.done) {
       return const Icon(Icons.check_circle, size: 14, color: Colors.green);
-    } else if (status == ChapterStatus.translating) {
+    } else if (chapter.status == ChapterStatus.translating) {
       return const Icon(Icons.sync, size: 14, color: Colors.blue);
     }
     return Icon(Icons.circle_outlined, size: 14, color: Colors.grey.shade400);
@@ -570,7 +583,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
             const SizedBox(width: 8),
             Text(
-              chapter.translatedTitle.isNotEmpty ? chapter.translatedTitle : chapter.title,
+              chapter.translatedTitle.isNotEmpty
+                  ? chapter.translatedTitle
+                  : chapter.title,
               style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             ),
           ],
@@ -868,9 +883,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: () {
-                              setState(() {
-                                _selectedChapterId = project.chapters.first.id;
-                              });
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => EbookReaderScreen(
+                                    initialChapterId: project.chapters.first.id,
+                                  ),
+                                ),
+                              );
                             },
                             icon: const Icon(Icons.play_arrow, size: 18),
                             label: const Text('Start Reading'),
@@ -957,7 +976,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               ),
                             ),
                           ),
-                          _buildChapterStatusIcon(ch.status),
+                          _buildChapterStatusIcon(ch),
                           const SizedBox(width: 8),
                           Icon(
                             Icons.chevron_right,

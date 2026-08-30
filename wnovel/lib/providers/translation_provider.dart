@@ -65,6 +65,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
     // This lets callers simply call startBatchTranslation without needing to
     // mutate project state themselves.
     if (startIndex < project.chapters.length &&
+        !project.chapters[startIndex].skipTranslation &&
         project.chapters[startIndex].status == ChapterStatus.done) {
       project.chapters[startIndex] = project.chapters[startIndex].copyWith(
         status: ChapterStatus.pending,
@@ -97,7 +98,9 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
       // We bypass this check for the very first chapter of the batch (startIndex)
       // because the user explicitly chose to start there.
       if (chapterIndex > 0 && chapterIndex > startIndex) {
-        if (project.chapters[chapterIndex - 1].status != ChapterStatus.done) {
+        final previousChapter = project.chapters[chapterIndex - 1];
+        if (previousChapter.status != ChapterStatus.done &&
+            !previousChapter.skipTranslation) {
           state = state.copyWith(
             isTranslating: false,
             errorMessage: 'Translation halted: Previous chapter is not done.',
@@ -106,7 +109,7 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
         }
       }
 
-      if (chapter.status == ChapterStatus.done) {
+      if (chapter.status == ChapterStatus.done || chapter.skipTranslation) {
         // Skip already translated chapters
         state = state.copyWith(
           currentChapterIndex: state.currentChapterIndex + 1,
@@ -226,6 +229,13 @@ class TranslationNotifier extends StateNotifier<TranslationState> {
 
     final chapterIndex = project.chapters.indexWhere((c) => c.id == chapter.id);
     if (chapterIndex == -1) return;
+
+    if (chapter.skipTranslation) {
+      state = state.copyWith(
+        errorMessage: 'This chapter is marked as not needing translation.',
+      );
+      return;
+    }
 
     // Mark as translating
     project.chapters[chapterIndex] = chapter.copyWith(
